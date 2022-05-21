@@ -5,6 +5,9 @@
 
 namespace vec {
 
+/* template <typename T, size_t inline_cap>
+class Veciterator; */
+
 template <typename T, size_t inline_cap>
 class SmallVector {
  private:
@@ -56,6 +59,59 @@ class SmallVector {
     } else {
       throw std::out_of_range("Small vector out of bounds");
     }
+  }
+
+  struct iterator {
+   public:
+    using iterator_category = std::forward_iterator_tag;
+    using difference_type = std::ptrdiff_t;
+    using value_type = T;
+    using pointer = value_type*;
+    using reference = value_type&;
+
+    iterator(const pointer ptr, pointer l, pointer f)
+        : m_ptr(ptr), last_on_stack(l), first_in_heap(f) {}
+    iterator(const iterator& other)
+        : m_ptr(other.m_ptr),
+          last_on_stack(other.last_on_stack),
+          first_in_heap(other.first_in_heap) {}
+
+    reference operator*() const { return *m_ptr; }
+    pointer operator->() { return m_ptr; }
+
+    iterator& operator++() {
+      if (m_ptr == last_on_stack) {
+        m_ptr = first_in_heap;
+      } else {
+        m_ptr++;
+      }
+      return *this;
+    }
+
+    friend bool operator==(const iterator& a, const iterator& b) {
+      return a.m_ptr == b.m_ptr;
+    };
+    friend bool operator!=(const iterator& a, const iterator& b) {
+      return a.m_ptr != b.m_ptr;
+    };
+
+   private:
+    pointer m_ptr;
+    pointer last_on_stack;
+    pointer first_in_heap;
+  };
+
+  iterator begin() {
+    return iterator(
+        reinterpret_cast<const T*>(&initial[0]),
+        &initial[inline_cap - 1],
+        data);
+  }
+  iterator end() {
+    return iterator(
+        reinterpret_cast<const T*>(&data[size - 1] + sizeof(T)),
+        &initial[inline_cap - 1],
+        data);
   }
 };
 

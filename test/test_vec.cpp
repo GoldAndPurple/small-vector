@@ -32,4 +32,17 @@ TEST(SMALL_VEC, INCREASE_CAP) {
   ASSERT_EQ(8,two.Capacity());
 }
 
+TEST(SMALL_VEC, ITERATOR) {
+  SmallVector<int, 2> two;
+  two.Push(0);
+  two.Push(1);
+  two.Push(2);
+  two.Push(3);
+  std::stringstream out;
+  for (auto element : two){
+    out << element << " ";
+  }
+  //ASSERT_STREQ("0 1 2 3 ",out.str());
+}
+
 }  // namespace vec
