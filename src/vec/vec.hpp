@@ -5,9 +5,6 @@
 
 namespace vec {
 
-/* template <typename T, size_t inline_cap>
-class Veciterator; */
-
 template <typename T, size_t inline_cap>
 class SmallVector {
  private:
@@ -27,7 +24,8 @@ class SmallVector {
 
   void Push(T elem) {
     if (size < inline_cap) {
-      std::memcpy(&initial[sizeof(T) * size], &elem, sizeof(T));
+      T* tmp = reinterpret_cast<T*>(&initial[sizeof(T) * size]);
+      *tmp = elem;
     } else {
       if (data == nullptr) {
         capacity *= 2;
@@ -36,7 +34,9 @@ class SmallVector {
         capacity *= 2;
         T* old = data;
         data = new T[capacity - inline_cap];
-        std::memcpy(data, old, sizeof(T) * (size - inline_cap));
+        for (size_t i = 0; i < size - inline_cap; i++) {
+          data[i] = old[i];
+        }
         delete[] old;
       }
       data[size - inline_cap] = elem;
@@ -63,7 +63,7 @@ class SmallVector {
 
   struct iterator {
    public:
-    using iterator_category = std::forward_iterator_tag;
+    using iterator_category = std::input_iterator_tag;
     using difference_type = std::ptrdiff_t;
     using value_type = T;
     using pointer = value_type*;
@@ -87,6 +87,11 @@ class SmallVector {
       }
       return *this;
     }
+    iterator operator++(int) {
+      iterator retval = *this;
+      ++(*this);
+      return retval;
+    }
 
     friend bool operator==(const iterator& a, const iterator& b) {
       return a.m_ptr == b.m_ptr;
@@ -108,7 +113,7 @@ class SmallVector {
         data);
   }
   iterator end() {
-    T* last =  const_cast<T*>(&(*this)[size - 1]);
+    T* last = const_cast<T*>(&(*this)[size - 1]);
 
     return ++iterator(
         last,
