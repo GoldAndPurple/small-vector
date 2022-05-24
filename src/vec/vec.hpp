@@ -31,12 +31,12 @@ class SmallVector {
     } else {
       if (data == nullptr) {
         capacity *= 2;
-        data = new T[capacity];
+        data = new T[capacity - inline_cap];
       } else if (size == capacity) {
         capacity *= 2;
         T* old = data;
-        data = new T[capacity];
-        std::memcpy(data, old, sizeof(T) * size);
+        data = new T[capacity - inline_cap];
+        std::memcpy(data, old, sizeof(T) * (size - inline_cap));
         delete[] old;
       }
       data[size - inline_cap] = elem;
@@ -69,7 +69,7 @@ class SmallVector {
     using pointer = value_type*;
     using reference = value_type&;
 
-    iterator(const pointer ptr, pointer l, pointer f)
+    iterator(pointer ptr, pointer l, pointer f)
         : m_ptr(ptr), last_on_stack(l), first_in_heap(f) {}
     iterator(const iterator& other)
         : m_ptr(other.m_ptr),
@@ -103,14 +103,16 @@ class SmallVector {
 
   iterator begin() {
     return iterator(
-        reinterpret_cast<const T*>(&initial[0]),
-        &initial[inline_cap - 1],
+        reinterpret_cast<T*>(&initial[0]),
+        reinterpret_cast<T*>(&initial[sizeof(T) * (inline_cap - 1)]),
         data);
   }
   iterator end() {
-    return iterator(
-        reinterpret_cast<const T*>(&data[size - 1] + sizeof(T)),
-        &initial[inline_cap - 1],
+    T* last =  const_cast<T*>(&(*this)[size - 1]);
+
+    return ++iterator(
+        last,
+        reinterpret_cast<T*>(&initial[sizeof(T) * (inline_cap - 1)]),
         data);
   }
 };

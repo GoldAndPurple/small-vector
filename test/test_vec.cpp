@@ -34,15 +34,24 @@ TEST(SMALL_VEC, INCREASE_CAP) {
 
 TEST(SMALL_VEC, ITERATOR) {
   SmallVector<int, 2> two;
+  std::stringstream out;
+
   two.Push(0);
   two.Push(1);
-  two.Push(2);
-  two.Push(3);
-  std::stringstream out;
   for (auto element : two){
     out << element << " ";
   }
-  //ASSERT_STREQ("0 1 2 3 ",out.str());
+  ASSERT_STREQ("0 1 ",out.str().c_str());
+  out.str("");
+  out.clear();
+
+  two.Push(2);
+  two.Push(3);
+  two.Push(4);
+  for (auto element : two){
+    out << element << " ";
+  }
+  ASSERT_STREQ("0 1 2 3 4 ",out.str().c_str());
 }
 
 }  // namespace vec
