@@ -61,6 +61,15 @@ TEST(SMALL_VEC, ITERATOR) {
     out << element << " ";
   }
   ASSERT_STREQ("0 1 2 3 4 ", out.str().c_str());
+  out.str("");
+  out.clear();
+
+  for (auto i = two.begin(); i != two.end(); i++){
+    *i = (*i)*2;
+    out << *i << " ";
+  }
+  ASSERT_STREQ("0 2 4 6 8 ", out.str().c_str());
+  ASSERT_EQ(4, two[2]);
 }
 
 TEST(SMALL_VEC, CUSTOM_CLASS) {

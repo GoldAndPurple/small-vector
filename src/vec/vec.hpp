@@ -8,10 +8,9 @@ namespace vec {
 template <typename T, size_t inline_cap>
 class SmallVector {
  private:
-  char initial[sizeof(T) * inline_cap] = {0};
   size_t size = 0;
   size_t capacity = inline_cap;
-  size_t heap_cap = 0;
+  T initial[inline_cap];
   T* data = nullptr;
 
  public:
@@ -24,8 +23,7 @@ class SmallVector {
 
   void Push(T elem) {
     if (size < inline_cap) {
-      T* tmp = reinterpret_cast<T*>(&initial[sizeof(T) * size]);
-      *tmp = elem;
+      initial[size] = elem;
     } else {
       if (data == nullptr) {
         capacity *= 2;
@@ -53,17 +51,17 @@ class SmallVector {
 
   const T& operator[](size_t index) const {
     if (index < inline_cap) {
-      return (T&)(initial[sizeof(T) * index]);
+      return initial[index];
     } else if (index < size) {
-      return data[size - inline_cap - 1];
+      return data[index - inline_cap];
     } else {
-      throw std::out_of_range("Small vector out of bounds");
+      throw std::out_of_range("SmallVector out of bounds");
     }
   }
 
   struct iterator {
    public:
-    using iterator_category = std::input_iterator_tag;
+    using iterator_category = std::bidirectional_iterator_tag;
     using difference_type = std::ptrdiff_t;
     using value_type = T;
     using pointer = value_type*;
@@ -77,7 +75,7 @@ class SmallVector {
           first_in_heap(other.first_in_heap) {}
 
     reference operator*() const { return *m_ptr; }
-    pointer operator->() { return m_ptr; }
+    pointer operator->() const { return m_ptr; }
 
     iterator& operator++() {
       if (m_ptr == last_on_stack) {
@@ -93,8 +91,22 @@ class SmallVector {
       return retval;
     }
 
+    iterator& operator--() {
+      if (m_ptr == first_in_heap) {
+        m_ptr = last_on_stack;
+      } else {
+        m_ptr--;
+      }
+      return *this;
+    }
+    iterator operator--(int) {
+      iterator retval = *this;
+      --(*this);
+      return retval;
+    }
+
     friend bool operator==(const iterator& a, const iterator& b) {
-      return a.m_ptr == b.m_ptr;
+      return (a.m_ptr == b.m_ptr);
     };
     friend bool operator!=(const iterator& a, const iterator& b) {
       return a.m_ptr != b.m_ptr;
@@ -107,18 +119,11 @@ class SmallVector {
   };
 
   iterator begin() {
-    return iterator(
-        reinterpret_cast<T*>(&initial[0]),
-        reinterpret_cast<T*>(&initial[sizeof(T) * (inline_cap - 1)]),
-        data);
+    return iterator(&initial[0], &initial[inline_cap - 1], data);
   }
   iterator end() {
     T* last = const_cast<T*>(&(*this)[size - 1]);
-
-    return ++iterator(
-        last,
-        reinterpret_cast<T*>(&initial[sizeof(T) * (inline_cap - 1)]),
-        data);
+    return ++iterator(last, &initial[inline_cap - 1], data);
   }
 };
 
